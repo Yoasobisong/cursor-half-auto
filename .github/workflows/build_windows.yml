@@ -8,14 +8,14 @@ on:
 env:
   LANG: zh_CN.UTF-8
   LC_ALL: zh_CN.UTF-8
-  PYTHONUTF8: 1  # 强制Python使用UTF-8编码
+  PYTHONUTF8: 1
+
+permissions:
+  contents: write  # 必须的仓库权限
 
 jobs:
   build:
     runs-on: windows-latest
-    permissions:
-      contents: write
-      packages: write
 
     steps:
     - uses: actions/checkout@v3
@@ -23,31 +23,20 @@ jobs:
     - name: Set Release Tag
       shell: powershell
       run: |
-        # 使用.NET方法写入环境变量文件
         $RELEASE_TAG = (Get-Date).ToString("yyyy-MM-dd")
-        $envContent = "RELEASE_TAG=$RELEASE_TAG"
-        [System.IO.File]::WriteAllText($env:GITHUB_ENV, $envContent, [System.Text.Encoding]::UTF8)
+        "RELEASE_TAG=$RELEASE_TAG" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
 
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
-        cache: 'pip'
-    
+
     - name: Install dependencies
-      shell: cmd
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
-        pip install pyinstaller -i https://pypi.tuna.tsinghua.edu.cn/simple
-      
-    - name: Check directory structure
-      shell: cmd
-      run: |
-        dir
-        dir src
-        dir turnstilePatch
-    
+        pip install pyinstaller
+
     - name: Build executable
       shell: cmd
       run: |
@@ -56,12 +45,6 @@ jobs:
           --add-data ".env.example;." ^
           --add-data "turnstilePatch;turnstilePatch" ^
           --name "CursorAutoFree" ^
-          --hidden-import=dotenv ^
-          --hidden-import=requests ^
-          --hidden-import=colorama ^
-          --hidden-import=DrissionPage ^
-          --hidden-import=selenium ^
-          --hidden-import=webdriver_manager ^
           "run.py"
 
         copy requirements.txt dist\
@@ -69,50 +52,17 @@ jobs:
         copy .env.example dist\.env.example
         
         echo @echo off > dist\启动程序.bat
-        echo title Cursor Half Auto >> dist\启动程序.bat
-        echo echo 正在启动Cursor Half Auto... >> dist\启动程序.bat
         echo CursorAutoFree.exe >> dist\启动程序.bat
-        echo pause >> dist\启动程序.bat
         
         cd dist
-        powershell "Compress-Archive -Path *.exe, *.bat, *.env.example, *.md, *.txt -DestinationPath CursorAutoFree_Windows.zip"
-    
-    - name: Create artifact directory
-      shell: powershell
-      run: |
-        # 使用.NET方法创建目录
-        [System.IO.Directory]::CreateDirectory("artifact") | Out-Null
+        powershell "Compress-Archive -Path * -DestinationPath CursorAutoFree_Windows.zip"
 
-    - name: Copy artifact
-      shell: cmd
-      run: copy dist\CursorAutoFree_Windows.zip artifact\
-    
-    - name: Release Artifact
+    - name: Upload Release
       shell: powershell
       run: |
-        # 配置编码环境
-        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-        
-        # 构建发布说明
-        $notes = @"
-        Windows 可执行文件自动构建
-        版本日期: $env:RELEASE_TAG
-        包含文件:
-        - 主程序: CursorAutoFree.exe
-        - 启动脚本: 启动程序.bat
-        - 环境配置示例: .env.example
-        "@
-        
-        # 执行发布命令
         gh release create "$env:RELEASE_TAG" `
-          artifact/CursorAutoFree_Windows.zip `
+          dist/CursorAutoFree_Windows.zip `
           --title "Release $env:RELEASE_TAG" `
-          --notes "$notes" `
-          --repo $env:GITHUB_REPOSITORY
-        
-        # 验证发布结果
-        Write-Host "=== 发布成功 ==="
-        gh release view "$env:RELEASE_TAG" --json assets
+          --notes "Windows自动构建版本 $env:RELEASE_TAG"
       env:
-        GH_TOKEN: ${{ secrets.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 }}
-        GITHUB_REPOSITORY: ${{ github.repository }}
+        GH_TOKEN: ${{ github.token }}  # 使用GitHub自动生成的token
