@@ -28,6 +28,10 @@
 .env
 **/.env
 
+# 忽略日志文件但保留目录结构
+/src/logs/*.log
+**/logs/*.log
+
 # 其他常见的Python项目忽略项
 .pytest_cache/
 .coverage
