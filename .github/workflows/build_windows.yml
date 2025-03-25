@@ -63,7 +63,7 @@ jobs:
         powershell Compress-Archive -Path CursorAutoFree.exe, 启动程序.bat, .env.example, README.md, requirements.txt -DestinationPath CursorAutoFree_Windows.zip
     
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v2.3.1
       with:
         name: CursorAutoFree_Windows
         path: dist/CursorAutoFree_Windows.zip
