@@ -32,6 +32,9 @@
 /src/logs/*.log
 **/logs/*.log
 
+# 忽略构建规范文件
+*.spec
+
 # 其他常见的Python项目忽略项
 .pytest_cache/
 .coverage
@@ -52,4 +55,4 @@ env/
 
 # 系统文件
 .DS_Store
-Thumbs.db 
+Thumbs.db
