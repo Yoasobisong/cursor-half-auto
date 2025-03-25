@@ -32,8 +32,7 @@ jobs:
     
     - name: Build executable
       run: |
-        # 构建Windows可执行文件
-        python -m PyInstaller --noconfirm --onefile --console ^
+        cmd /c python -m PyInstaller --noconfirm --onefile --console ^
           --add-data "src/data;src/data" ^
           --add-data ".env.example;." ^
           --add-data "turnstilePatch;turnstilePatch" ^
@@ -45,6 +44,7 @@ jobs:
           --hidden-import=selenium ^
           --hidden-import=webdriver_manager ^
           "run.py"
+
         
         # 复制必要文件到发布目录
         copy requirements.txt dist\
