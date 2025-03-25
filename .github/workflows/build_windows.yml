@@ -14,6 +14,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+
+    - name: Set Release Tag
+      shell: powershell
+      run: |
+        $RELEASE_TAG = Get-Date -Format "yyyy-MM-dd"
+        echo "RELEASE_TAG=$RELEASE_TAG" | Out-File -FilePath $env:GITHUB_ENV -Append
+
     
     - name: Set up Python
       uses: actions/setup-python@v4
