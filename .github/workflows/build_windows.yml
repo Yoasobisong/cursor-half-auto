@@ -8,6 +8,7 @@ on:
 env:
   LANG: zh_CN.UTF-8
   LC_ALL: zh_CN.UTF-8
+  PYTHONUTF8: 1  # 强制Python使用UTF-8编码
 
 jobs:
   build:
@@ -19,12 +20,21 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Validate Encoding
+      shell: powershell
+      run: |
+        Write-Output "当前编码验证："
+        chcp
+        [System.Text.Encoding]::Default
+        [Console]::OutputEncoding
+    
     - name: Set Release Tag
       shell: powershell
       run: |
-        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+        # 强制使用带BOM的UTF-8编码
+        $PSDefaultParameterValues['*:Encoding'] = 'utf8bom'
         $RELEASE_TAG = (Get-Date).ToString("yyyy-MM-dd")
-        echo "RELEASE_TAG=$RELEASE_TAG" >> $env:GITHUB_ENV
+        "RELEASE_TAG=$RELEASE_TAG" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8bom -Append
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -77,7 +87,10 @@ jobs:
     
     - name: Create artifact directory
       shell: powershell
-      run: New-Item -ItemType Directory -Force -Path artifact
+      run: |
+        # 强制创建目录并设置编码
+        $PSDefaultParameterValues['*:Encoding'] = 'utf8bom'
+        New-Item -ItemType Directory -Force -Path artifact
 
     - name: Copy artifact
       shell: cmd
@@ -86,16 +99,31 @@ jobs:
     - name: Release Artifact
       shell: powershell
       run: |
+        # 设置完整的编码环境
+        $PSDefaultParameterValues['*:Encoding'] = 'utf8bom'
         [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-        $notes = "Windows可执行文件自动构建 - $env:RELEASE_TAG"
+        [System.Environment]::SetEnvironmentVariable('LC_ALL', 'zh_CN.UTF-8')
         
+        # 使用here-string定义中文内容
+        $notes = @"
+        Windows 可执行文件自动构建
+        版本日期: $env:RELEASE_TAG
+        包含以下文件:
+        - 主程序: CursorAutoFree.exe
+        - 启动脚本: 启动程序.bat
+        - 环境配置示例: .env.example
+        "@
+        
+        # 执行发布命令
         gh release create "$env:RELEASE_TAG" `
           artifact/CursorAutoFree_Windows.zip `
           --title "Release $env:RELEASE_TAG" `
           --notes "$notes" `
           --repo $env:GITHUB_REPOSITORY
         
-        Write-Host "Release created: $env:RELEASE_TAG"
+        # 验证发布结果
+        Write-Output "=== 发布验证 ==="
+        gh release view "$env:RELEASE_TAG" --json assets
       env:
         GH_TOKEN: ${{ secrets.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 }}
-        GITHUB_REPOSITORY: ${{ github.repository }}     
+        GITHUB_REPOSITORY: ${{ github.repository }}
