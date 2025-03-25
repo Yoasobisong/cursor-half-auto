@@ -5,6 +5,10 @@ on:
     types: [created]
   workflow_dispatch:
 
+env:
+  LANG: zh_CN.UTF-8
+  LC_ALL: zh_CN.UTF-8
+
 jobs:
   build:
     runs-on: windows-latest
@@ -18,6 +22,7 @@ jobs:
     - name: Set Release Tag
       shell: powershell
       run: |
+        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
         $RELEASE_TAG = (Get-Date).ToString("yyyy-MM-dd")
         echo "RELEASE_TAG=$RELEASE_TAG" >> $env:GITHUB_ENV
 
@@ -28,12 +33,14 @@ jobs:
         cache: 'pip'
     
     - name: Install dependencies
+      shell: cmd
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
         pip install pyinstaller -i https://pypi.tuna.tsinghua.edu.cn/simple
       
     - name: Check directory structure
+      shell: cmd
       run: |
         dir
         dir src
@@ -72,15 +79,23 @@ jobs:
       shell: powershell
       run: New-Item -ItemType Directory -Force -Path artifact
 
-    - name: Copy artifact for upload
+    - name: Copy artifact
       shell: cmd
       run: copy dist\CursorAutoFree_Windows.zip artifact\
     
     - name: Release Artifact
       shell: powershell
       run: |
-        gh release create "$env:RELEASE_TAG" artifact/CursorAutoFree_Windows.zip `
+        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+        $notes = "Windows可执行文件自动构建 - $env:RELEASE_TAG"
+        
+        gh release create "$env:RELEASE_TAG" `
+          artifact/CursorAutoFree_Windows.zip `
           --title "Release $env:RELEASE_TAG" `
-          --notes "Windows 可执行文件自动构建 - $env:RELEASE_TAG"
+          --notes "$notes" `
+          --repo $env:GITHUB_REPOSITORY
+        
+        Write-Host "Release created: $env:RELEASE_TAG"
       env:
-        GH_TOKEN: ${{ secrets.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 }}       
+        GH_TOKEN: ${{ secrets.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 }}
+        GITHUB_REPOSITORY: ${{ github.repository }}     
