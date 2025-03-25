@@ -9,8 +9,8 @@ jobs:
   build:
     runs-on: windows-latest
     permissions:
-      contents: write   # 允许写入 Release 资源
-      packages: write   # 允许上传 Release 资产
+      contents: write
+      packages: write
 
     steps:
     - uses: actions/checkout@v3
@@ -18,8 +18,8 @@ jobs:
     - name: Set Release Tag
       shell: powershell
       run: |
-        $RELEASE_TAG = Get-Date -Format "yyyy-MM-dd"
-        echo "RELEASE_TAG=$RELEASE_TAG" | Out-File -FilePath $env:GITHUB_ENV -Append
+        $RELEASE_TAG = (Get-Date).ToString("yyyy-MM-dd")
+        echo "RELEASE_TAG=$RELEASE_TAG" >> $env:GITHUB_ENV
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -55,32 +55,32 @@ jobs:
           --hidden-import=webdriver_manager ^
           "run.py"
 
-        # 复制必要文件到发布目录
         copy requirements.txt dist\
         copy README.md dist\
         copy .env.example dist\.env.example
         
-        # 创建启动批处理文件
         echo @echo off > dist\启动程序.bat
         echo title Cursor Half Auto >> dist\启动程序.bat
         echo echo 正在启动Cursor Half Auto... >> dist\启动程序.bat
         echo CursorAutoFree.exe >> dist\启动程序.bat
         echo pause >> dist\启动程序.bat
         
-        # 压缩文件
         cd dist
-        powershell Compress-Archive -Path .\CursorAutoFree.exe, .\启动程序.bat, .\.env.example, .\README.md, .\requirements.txt -DestinationPath CursorAutoFree_Windows.zip
+        powershell "Compress-Archive -Path *.exe, *.bat, *.env.example, *.md, *.txt -DestinationPath CursorAutoFree_Windows.zip"
     
     - name: Create artifact directory
-      run: mkdir artifact
-    
+      shell: powershell
+      run: New-Item -ItemType Directory -Force -Path artifact
+
     - name: Copy artifact for upload
+      shell: cmd
       run: copy dist\CursorAutoFree_Windows.zip artifact\
     
     - name: Release Artifact
+      shell: powershell
       run: |
-        gh release create "$env:RELEASE_TAG" artifact/CursorAutoFree_Windows.zip --title "Release $env:RELEASE_TAG" --notes "Windows 可执行文件自动构建 - $env:RELEASE_TAG"
+        gh release create "$env:RELEASE_TAG" artifact/CursorAutoFree_Windows.zip `
+          --title "Release $env:RELEASE_TAG" `
+          --notes "Windows 可执行文件自动构建 - $env:RELEASE_TAG"
       env:
-        GH_TOKEN: ${{ secrets.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 }}
-
-        
+        GH_TOKEN: ${{ secrets.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 }}       
