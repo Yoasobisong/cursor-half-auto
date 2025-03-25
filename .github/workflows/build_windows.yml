@@ -21,8 +21,6 @@ jobs:
         $RELEASE_TAG = Get-Date -Format "yyyy-MM-dd"
         echo "RELEASE_TAG=$RELEASE_TAG" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-  
-    
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
@@ -81,7 +79,8 @@ jobs:
     
     - name: Release Artifact
       run: |
-        RELEASE_TAG=$(date +%Y-%m-%d)
-        gh release create "$RELEASE_TAG" artifact/CursorAutoFree_Windows.zip --title "Release $RELEASE_TAG" --notes "Windows 可执行文件自动构建 - $RELEASE_TAG"
+        gh release create "$env:RELEASE_TAG" artifact/CursorAutoFree_Windows.zip --title "Release $env:RELEASE_TAG" --notes "Windows 可执行文件自动构建 - $env:RELEASE_TAG"
       env:
         GH_TOKEN: ${{ secrets.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 }}
+
+        
