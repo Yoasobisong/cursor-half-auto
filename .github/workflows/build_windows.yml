@@ -19,14 +19,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Set Release Tag
       shell: powershell
       run: |
-        # 强制使用带BOM的UTF-8编码
-        $PSDefaultParameterValues['*:Encoding'] = 'utf8bom'
+        # 使用.NET方法写入环境变量文件
         $RELEASE_TAG = (Get-Date).ToString("yyyy-MM-dd")
-        "RELEASE_TAG=$RELEASE_TAG" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8bom -Append
+        $envContent = "RELEASE_TAG=$RELEASE_TAG"
+        [System.IO.File]::WriteAllText($env:GITHUB_ENV, $envContent, [System.Text.Encoding]::UTF8)
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -80,9 +80,8 @@ jobs:
     - name: Create artifact directory
       shell: powershell
       run: |
-        # 强制创建目录并设置编码
-        $PSDefaultParameterValues['*:Encoding'] = 'utf8bom'
-        New-Item -ItemType Directory -Force -Path artifact
+        # 使用.NET方法创建目录
+        [System.IO.Directory]::CreateDirectory("artifact") | Out-Null
 
     - name: Copy artifact
       shell: cmd
@@ -91,16 +90,14 @@ jobs:
     - name: Release Artifact
       shell: powershell
       run: |
-        # 设置完整的编码环境
-        $PSDefaultParameterValues['*:Encoding'] = 'utf8bom'
+        # 配置编码环境
         [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-        [System.Environment]::SetEnvironmentVariable('LC_ALL', 'zh_CN.UTF-8')
         
-        # 使用here-string定义中文内容
+        # 构建发布说明
         $notes = @"
         Windows 可执行文件自动构建
         版本日期: $env:RELEASE_TAG
-        包含以下文件:
+        包含文件:
         - 主程序: CursorAutoFree.exe
         - 启动脚本: 启动程序.bat
         - 环境配置示例: .env.example
@@ -114,7 +111,7 @@ jobs:
           --repo $env:GITHUB_REPOSITORY
         
         # 验证发布结果
-        Write-Output "=== 发布验证 ==="
+        Write-Host "=== 发布成功 ==="
         gh release view "$env:RELEASE_TAG" --json assets
       env:
         GH_TOKEN: ${{ secrets.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 }}
