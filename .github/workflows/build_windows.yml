@@ -12,7 +12,6 @@ jobs:
       contents: write   # 允许写入 Release 资源
       packages: write   # 允许上传 Release 资产
 
-    
     steps:
     - uses: actions/checkout@v3
     
@@ -50,8 +49,6 @@ jobs:
           --hidden-import=webdriver_manager ^
           "run.py"
 
-
-        
         # 复制必要文件到发布目录
         copy requirements.txt dist\
         copy README.md dist\
@@ -66,7 +63,7 @@ jobs:
         
         # 压缩文件
         cd dist
-        powershell Compress-Archive -Path CursorAutoFree.exe, 启动程序.bat, .env.example, README.md, requirements.txt -DestinationPath CursorAutoFree_Windows.zip
+        powershell Compress-Archive -Path .\CursorAutoFree.exe, .\启动程序.bat, .\.env.example, .\README.md, .\requirements.txt -DestinationPath CursorAutoFree_Windows.zip
     
     - name: Create artifact directory
       run: mkdir artifact
@@ -75,53 +72,8 @@ jobs:
       run: copy dist\CursorAutoFree_Windows.zip artifact\
     
     - name: Release Artifact
-      uses: actions/github-script@v6
-      with:
-        script: |
-          const fs = require('fs');
-          const path = require('path');
-          
-          // 获取构建的ZIP文件
-          const artifactPath = path.join(process.env.GITHUB_WORKSPACE, 'artifact', 'CursorAutoFree_Windows.zip');
-          
-          // 如果是手动触发，创建一个新的Release
-          if (context.eventName === 'workflow_dispatch') {
-            const date = new Date().toISOString().split('T')[0];
-            const releaseTag = `auto-release-${date}`;
-            
-            // 创建Release
-            const release = await github.rest.repos.createRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: releaseTag,
-              name: `自动构建 ${date}`,
-              body: `Windows 可执行文件自动构建 - ${date}`,
-              draft: false,
-              prerelease: false
-            });
-            
-            // 上传构建产物到Release
-            const fileContent = fs.readFileSync(artifactPath);
-            await github.rest.repos.uploadReleaseAsset({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: release.data.id,
-              name: 'CursorAutoFree_Windows.zip',
-              data: fileContent
-            });
-          } 
-          // 如果是通过创建Release触发，上传到现有Release
-          else if (context.eventName === 'release') {
-            // 获取当前Release
-            const releaseId = context.payload.release.id;
-            
-            // 上传构建产物到Release
-            const fileContent = fs.readFileSync(artifactPath);
-            await github.rest.repos.uploadReleaseAsset({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: releaseId,
-              name: 'CursorAutoFree_Windows.zip',
-              data: fileContent
-            });
-          } 
+      run: |
+        RELEASE_TAG=$(date +%Y-%m-%d)
+        gh release create "$RELEASE_TAG" artifact/CursorAutoFree_Windows.zip --title "Release $RELEASE_TAG" --notes "Windows 可执行文件自动构建 - $RELEASE_TAG"
+      env:
+        GH_TOKEN: ${{ secrets.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 }}
