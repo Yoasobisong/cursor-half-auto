@@ -1,0 +1,51 @@
+# 忽略build目录及其内容
+/build/
+**/build/
+
+# 忽略dist目录及其内容
+/dist/
+**/dist/
+
+# 忽略__pycache__目录及其内容
+/__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+# 忽略linux目录及其内容
+/linux/
+**/linux/
+
+# 忽略screenshots目录及其内容
+/screenshots/
+**/screenshots/
+
+# 忽略windows目录及其内容
+/windows/
+**/windows/
+
+# 忽略环境变量文件
+.env
+**/.env
+
+# 其他常见的Python项目忽略项
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+.venv/
+venv/
+ENV/
+env/
+
+# IDE相关
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db 
