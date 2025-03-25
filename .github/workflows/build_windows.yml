@@ -19,14 +19,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-
-    - name: Validate Encoding
-      shell: powershell
-      run: |
-        Write-Output "当前编码验证："
-        chcp
-        [System.Text.Encoding]::Default
-        [Console]::OutputEncoding
     
     - name: Set Release Tag
       shell: powershell
