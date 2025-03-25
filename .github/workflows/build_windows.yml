@@ -10,6 +10,7 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: write   # 允许写入 Release 资源
+      packages: write   # 允许上传 Release 资产
 
     
     steps:
