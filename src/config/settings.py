@@ -48,8 +48,35 @@ class Config:
         self.imap = False
         self.temp_mail = os.getenv("TEMP_MAIL", "").strip().split("@")[0]
         self.temp_mail_epin = os.getenv("TEMP_MAIL_EPIN", "").strip()
-        self.temp_mail_ext = os.getenv("TEMP_MAIL_EXT", "").strip()
-        self.domain = os.getenv("DOMAIN", "").strip()
+        
+        # 获取域名列表
+        try:
+            self.domains = eval(os.getenv("DOMAIN", "[]").strip())
+            if not isinstance(self.domains, list):
+                raise ValueError("DOMAIN 必须是一个列表格式")
+            
+            if len(self.domains) == 0:
+                raise ValueError("没有配置域名")
+            
+            # 显示可用的域名列表
+            print("\n可用的域名列表:")
+            for i, domain in enumerate(self.domains, 1):
+                print(f"{i}. {domain}")
+                
+            # 让用户选择域名
+            while True:
+                try:
+                    choice = int(input("\n请选择域名 (输入数字): ").strip())
+                    if 1 <= choice <= len(self.domains):
+                        self.domain = self.domains[choice - 1]
+                        break
+                    else:
+                        print("无效的选择，请重新输入")
+                except ValueError:
+                    print("请输入有效的数字")
+                    
+        except Exception as e:
+            raise ValueError(f"域名配置错误: {str(e)}")
 
         # 如果临时邮箱为null则加载IMAP
         if self.temp_mail == "null":
@@ -94,27 +121,10 @@ class Config:
         self.check_config()
 
     def get_temp_mail(self):
-
         return self.temp_mail
 
     def get_temp_mail_epin(self):
-
         return self.temp_mail_epin
-
-    def get_temp_mail_ext(self):
-
-        return self.temp_mail_ext
-
-    def get_imap(self):
-        if not self.imap:
-            return False
-        return {
-            "imap_server": self.imap_server,
-            "imap_port": self.imap_port,
-            "imap_user": self.imap_user,
-            "imap_pass": self.imap_pass,
-            "imap_dir": self.imap_dir,
-        }
 
     def get_domain(self):
         return self.domain
@@ -187,13 +197,14 @@ class Config:
         if self.imap:
             logging.info(f"\033[32mIMAP服务器: {self.imap_server}\033[0m")
             logging.info(f"\033[32mIMAP端口: {self.imap_port}\033[0m")
-            logging.info(f"\033[32mIMAP用户名: {self.imap_user}\033[0m")
-            logging.info(f"\033[32mIMAP密码: {'*' * len(self.imap_pass)}\033[0m")
+            # 修改显示方式，使用相同长度的星号
+            user_stars = '*' * 10
+            pass_stars = '*' * 10
+            logging.info(f"\033[32mIMAP用户名: {user_stars}\033[0m")
+            logging.info(f"\033[32mIMAP密码: {pass_stars}\033[0m")
             logging.info(f"\033[32mIMAP收件箱目录: {self.imap_dir}\033[0m")
         if self.temp_mail != "null":
-            logging.info(
-                f"\033[32m临时邮箱: {self.temp_mail}{self.temp_mail_ext}\033[0m"
-            )
+            logging.info(f"\033[32m临时邮箱: {self.temp_mail}@{self.domain}\033[0m")
         logging.info(f"\033[32m域名: {self.domain}\033[0m")
 
 
