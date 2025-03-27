@@ -21,7 +21,6 @@ class EmailVerificationHandler:
         self.temp_mail = self.config.get_temp_mail()
         self.temp_mail_epin = self.config.get_temp_mail_epin()
         self.session = requests.Session()
-        self.emailExtension = self.config.get_temp_mail_ext()
         # 获取协议类型，默认为 POP3
         self.protocol = self.config.get_protocol() or 'POP3'
 
@@ -217,7 +216,7 @@ class EmailVerificationHandler:
     # 手动输入验证码
     def _get_latest_mail_code(self):
         # 获取邮件列表
-        mail_list_url = f"https://tempmail.plus/api/mails?email={self.temp_mail}{self.emailExtension}&limit=20&epin={self.temp_mail_epin}"
+        mail_list_url = f"https://tempmail.plus/api/mails?email={self.temp_mail}@{self.config.get_domain()}&limit=20&epin={self.temp_mail_epin}"
         mail_list_response = self.session.get(mail_list_url)
         mail_list_data = mail_list_response.json()
         time.sleep(0.5)
@@ -230,7 +229,7 @@ class EmailVerificationHandler:
             return None, None
 
         # 获取具体邮件内容
-        mail_detail_url = f"https://tempmail.plus/api/mails/{first_id}?email={self.temp_mail}{self.emailExtension}&epin={self.temp_mail_epin}"
+        mail_detail_url = f"https://tempmail.plus/api/mails/{first_id}?email={self.temp_mail}@{self.config.get_domain()}&epin={self.temp_mail_epin}"
         mail_detail_response = self.session.get(mail_detail_url)
         mail_detail_data = mail_detail_response.json()
         time.sleep(0.5)
@@ -252,7 +251,7 @@ class EmailVerificationHandler:
         # 构造删除请求的URL和数据
         delete_url = "https://tempmail.plus/api/mails/"
         payload = {
-            "email": f"{self.temp_mail}{self.emailExtension}",
+            "email": f"{self.temp_mail}@{self.config.get_domain()}",
             "first_id": first_id,
             "epin": f"{self.temp_mail_epin}",
         }
