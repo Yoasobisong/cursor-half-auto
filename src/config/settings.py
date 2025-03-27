@@ -56,13 +56,37 @@ class Config:
             # 如果不是以 [ 开头，说明是旧格式，需要转换
             if not domain_str.startswith("["):
                 domain_str = f"['{domain_str}']"
+            else:
+                # 清理字符串
+                # 1. 移除所有空格
+                domain_str = domain_str.replace(" ", "")
+                # 2. 移除多余的引号
+                domain_str = domain_str.replace("''", "'")
+                # 3. 确保每个域名都被引号包围
+                if domain_str.startswith("[") and domain_str.endswith("]"):
+                    # 移除首尾的 [] 
+                    domains_temp = domain_str[1:-1]
+                    # 按逗号分割
+                    domains_list = domains_temp.split(",")
+                    # 处理每个域名
+                    cleaned_domains = []
+                    for d in domains_list:
+                        # 移除引号
+                        d = d.strip("'").strip('"')
+                        if d:  # 如果不是空字符串
+                            cleaned_domains.append(d)
+                    # 重新组装成正确的格式
+                    domain_str = "['" + "','".join(cleaned_domains) + "']"
             
-            # 确保所有的值都用引号括起来
-            domain_str = domain_str.replace("[", "['").replace("]", "']").replace(",", "','").replace("''", "'")
+            try:
+                self.domains = eval(domain_str)
+            except:
+                # 如果解析失败，尝试直接分割字符串
+                domains_temp = domain_str.strip("[]").split(",")
+                self.domains = [d.strip().strip("'").strip('"') for d in domains_temp if d.strip()]
             
-            self.domains = eval(domain_str)
             if not isinstance(self.domains, list):
-                raise ValueError("DOMAIN 必须是一个列表格式")
+                self.domains = [str(self.domains)]
             
             # 过滤掉空字符串
             self.domains = [d for d in self.domains if d.strip()]
