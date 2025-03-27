@@ -51,9 +51,21 @@ class Config:
         
         # 获取域名列表
         try:
-            self.domains = eval(os.getenv("DOMAIN", "[]").strip())
+            domain_str = os.getenv("DOMAIN", "[]").strip()
+            
+            # 如果不是以 [ 开头，说明是旧格式，需要转换
+            if not domain_str.startswith("["):
+                domain_str = f"['{domain_str}']"
+            
+            # 确保所有的值都用引号括起来
+            domain_str = domain_str.replace("[", "['").replace("]", "']").replace(",", "','").replace("''", "'")
+            
+            self.domains = eval(domain_str)
             if not isinstance(self.domains, list):
                 raise ValueError("DOMAIN 必须是一个列表格式")
+            
+            # 过滤掉空字符串
+            self.domains = [d for d in self.domains if d.strip()]
             
             if len(self.domains) == 0:
                 raise ValueError("没有配置域名")
