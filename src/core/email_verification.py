@@ -11,15 +11,19 @@ from email.parser import Parser
 
 
 class EmailVerificationHandler:
-    def __init__(self,account):
-        self.imap = Config().get_imap()
-        self.username = Config().get_temp_mail()
-        self.epin = Config().get_temp_mail_epin()
+    """邮箱验证码处理类"""
+
+    def __init__(self, email, config=None):
+        """初始化邮箱验证处理器"""
+        self.email = email
+        self.config = config if config else Config()
+        self.imap = self.config.get_imap()
+        self.temp_mail = self.config.get_temp_mail()
+        self.temp_mail_epin = self.config.get_temp_mail_epin()
         self.session = requests.Session()
-        self.emailExtension = Config().get_temp_mail_ext()
+        self.emailExtension = self.config.get_temp_mail_ext()
         # 获取协议类型，默认为 POP3
-        self.protocol = Config().get_protocol() or 'POP3'
-        self.account = account
+        self.protocol = self.config.get_protocol() or 'POP3'
 
     def get_verification_code(self, max_retries=10, retry_interval=30):
         """
@@ -85,7 +89,7 @@ class EmailVerificationHandler:
                 date = datetime.now().strftime("%d-%b-%Y")
                 status, messages = mail.search(None, f'ON {date} UNSEEN')
             else:
-                status, messages = mail.search(None, 'TO', '"'+self.account+'"')
+                status, messages = mail.search(None, 'TO', '"'+self.email+'"')
             if status != 'OK':
                 return None
 
@@ -102,7 +106,7 @@ class EmailVerificationHandler:
                 email_message = email.message_from_bytes(raw_email)
 
                 # 如果是按日期搜索的邮件，需要进一步核对收件人地址是否对应
-                if search_by_date and email_message['to'] !=self.account:
+                if search_by_date and email_message['to'] !=self.email:
                     continue
                 body = self._extract_imap_body(email_message)
                 if body:
@@ -213,7 +217,7 @@ class EmailVerificationHandler:
     # 手动输入验证码
     def _get_latest_mail_code(self):
         # 获取邮件列表
-        mail_list_url = f"https://tempmail.plus/api/mails?email={self.username}{self.emailExtension}&limit=20&epin={self.epin}"
+        mail_list_url = f"https://tempmail.plus/api/mails?email={self.temp_mail}{self.emailExtension}&limit=20&epin={self.temp_mail_epin}"
         mail_list_response = self.session.get(mail_list_url)
         mail_list_data = mail_list_response.json()
         time.sleep(0.5)
@@ -226,7 +230,7 @@ class EmailVerificationHandler:
             return None, None
 
         # 获取具体邮件内容
-        mail_detail_url = f"https://tempmail.plus/api/mails/{first_id}?email={self.username}{self.emailExtension}&epin={self.epin}"
+        mail_detail_url = f"https://tempmail.plus/api/mails/{first_id}?email={self.temp_mail}{self.emailExtension}&epin={self.temp_mail_epin}"
         mail_detail_response = self.session.get(mail_detail_url)
         mail_detail_data = mail_detail_response.json()
         time.sleep(0.5)
@@ -248,9 +252,9 @@ class EmailVerificationHandler:
         # 构造删除请求的URL和数据
         delete_url = "https://tempmail.plus/api/mails/"
         payload = {
-            "email": f"{self.username}{self.emailExtension}",
+            "email": f"{self.temp_mail}{self.emailExtension}",
             "first_id": first_id,
-            "epin": f"{self.epin}",
+            "epin": f"{self.temp_mail_epin}",
         }
 
         # 最多尝试5次
@@ -270,6 +274,6 @@ class EmailVerificationHandler:
 
 
 if __name__ == "__main__":
-    email_handler = EmailVerificationHandler()
+    email_handler = EmailVerificationHandler("example@example.com")
     code = email_handler.get_verification_code()
     print(code)

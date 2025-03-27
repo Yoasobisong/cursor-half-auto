@@ -523,7 +523,7 @@ class CursorKeepAlive:
         logging.info(f"帅哥,这是生成的邮箱账号: {account}")
 
         logging.info("帅哥,正在初始化邮箱验证模块...")
-        email_handler = EmailVerificationHandler(account)
+        email_handler = EmailVerificationHandler(account, config=self.config)
 
         auto_update_cursor_auth = True
 

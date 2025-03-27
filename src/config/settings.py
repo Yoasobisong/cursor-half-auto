@@ -187,6 +187,18 @@ class Config:
         """
         return os.getenv('IMAP_PROTOCOL', 'POP3')
 
+    def get_imap(self):
+        """获取IMAP配置信息"""
+        if not self.imap:
+            return False
+        return {
+            "imap_server": self.imap_server,
+            "imap_port": self.imap_port,
+            "imap_user": self.imap_user,
+            "imap_pass": self.imap_pass,
+            "imap_dir": self.imap_dir,
+        }
+
     def check_config(self):
         """检查配置项是否有效
 
