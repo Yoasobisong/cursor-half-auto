@@ -349,6 +349,7 @@ def sign_up_account(browser, tab, sign_up_url, account, password, first_name, la
 class EmailGenerator:
     def __init__(
         self,
+        config=None,
         password="".join(
             random.choices(
                 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*",
@@ -356,9 +357,8 @@ class EmailGenerator:
             )
         ),
     ):
-        configInstance = Config()
-        configInstance.print_config()
-        self.domain = configInstance.get_domain()
+        self.config = config if config else Config()
+        self.domain = self.config.get_domain()
         self.names = self.load_names()
         self.default_password = password
         self.default_first_name = self.generate_random_name()
@@ -388,33 +388,10 @@ class EmailGenerator:
         return random.choice(self.names)
 
     def generate_email(self, length=4):
-        """生成随机邮箱地址
-        Args:
-            length: 时间戳长度，默认为4
-        Returns:
-            str: 生成的邮箱地址
-        """
+        """生成随机邮箱地址"""
         length = random.randint(0, length)  # 生成0到length之间的随机整数
         timestamp = str(int(time.time()))[-length:]  # 使用时间戳后length位
-        
-        # 显示可用的域名列表
-        print("\n可用的域名列表:")
-        for i, domain in enumerate(self.domain, 1):
-            print(f"{i}. {domain}")
-            
-        # 让用户选择域名
-        while True:
-            try:
-                choice = int(input("\n请选择域名 (输入数字): ").strip())
-                if 1 <= choice <= len(self.domain):
-                    selected_domain = self.domain[choice - 1]
-                    break
-                else:
-                    print("无效的选择，请重新输入")
-            except ValueError:
-                print("请输入有效的数字")
-                
-        return f"{self.default_first_name}{timestamp}@{selected_domain}"
+        return f"{self.default_first_name}{timestamp}@{self.domain}"
 
     def get_account_info(self):
         """获取完整的账号信息"""
@@ -484,6 +461,7 @@ class CursorKeepAlive:
         self.logger = AccountLogger()
         self.greater_than_0_45 = check_cursor_version()
         self.browser_manager = None
+        self.config = Config()  # 创建一个Config实例
 
     def create_account(self):
         logging.info("\n帅哥,=== handsome boy please choose ===")
@@ -536,7 +514,7 @@ class CursorKeepAlive:
 
         logging.info("帅哥,正在生成随机账号信息...")
 
-        email_generator = EmailGenerator()
+        email_generator = EmailGenerator(config=self.config)  # 传入已有的Config实例
         first_name = email_generator.default_first_name
         last_name = email_generator.default_last_name
         account = email_generator.generate_email()
