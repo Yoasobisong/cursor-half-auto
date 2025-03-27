@@ -86,8 +86,22 @@ class Config:
             
             # 获取IMAP用户和密码列表
             try:
-                self.imap_users = eval(os.getenv("IMAP_USER", "[]").strip())
-                self.imap_passes = eval(os.getenv("IMAP_PASS", "[]").strip())
+                # 解析IMAP用户和密码列表
+                imap_user_str = os.getenv("IMAP_USER", "[]").strip()
+                imap_pass_str = os.getenv("IMAP_PASS", "[]").strip()
+                
+                # 如果不是以 [ 开头，说明是旧格式，需要转换
+                if not imap_user_str.startswith("["):
+                    imap_user_str = f"['{imap_user_str}']"
+                if not imap_pass_str.startswith("["):
+                    imap_pass_str = f"['{imap_pass_str}']"
+                
+                # 确保所有的值都用引号括起来
+                imap_user_str = imap_user_str.replace("[", "['").replace("]", "']").replace(",", "','").replace("''", "'")
+                imap_pass_str = imap_pass_str.replace("[", "['").replace("]", "']").replace(",", "','").replace("''", "'")
+                
+                self.imap_users = eval(imap_user_str)
+                self.imap_passes = eval(imap_pass_str)
                 
                 if len(self.imap_users) != len(self.imap_passes):
                     raise ValueError("IMAP_USER 和 IMAP_PASS 的数量不匹配")
