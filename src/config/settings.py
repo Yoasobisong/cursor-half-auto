@@ -56,8 +56,39 @@ class Config:
             self.imap = True
             self.imap_server = os.getenv("IMAP_SERVER", "").strip()
             self.imap_port = os.getenv("IMAP_PORT", "").strip()
-            self.imap_user = os.getenv("IMAP_USER", "").strip()
-            self.imap_pass = os.getenv("IMAP_PASS", "").strip()
+            
+            # 获取IMAP用户和密码列表
+            try:
+                self.imap_users = eval(os.getenv("IMAP_USER", "[]").strip())
+                self.imap_passes = eval(os.getenv("IMAP_PASS", "[]").strip())
+                
+                if len(self.imap_users) != len(self.imap_passes):
+                    raise ValueError("IMAP_USER 和 IMAP_PASS 的数量不匹配")
+                
+                if len(self.imap_users) == 0:
+                    raise ValueError("没有配置IMAP账号")
+                
+                # 显示可用的账号列表
+                print("\n可用的IMAP账号列表:")
+                for i, user in enumerate(self.imap_users, 1):
+                    print(f"{i}. {user}")
+                    
+                # 让用户选择账号
+                while True:
+                    try:
+                        choice = int(input("\n请选择IMAP账号 (输入数字): ").strip())
+                        if 1 <= choice <= len(self.imap_users):
+                            self.imap_user = self.imap_users[choice - 1]
+                            self.imap_pass = self.imap_passes[choice - 1]
+                            break
+                        else:
+                            print("无效的选择，请重新输入")
+                    except ValueError:
+                        print("请输入有效的数字")
+                        
+            except Exception as e:
+                raise ValueError(f"IMAP配置错误: {str(e)}")
+            
             self.imap_dir = os.getenv("IMAP_DIR", "inbox").strip()
 
         self.check_config()

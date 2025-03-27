@@ -31,60 +31,77 @@ logger = setup_logging()
 
 
 def get_cursor_paths() -> Tuple[str, str]:
-    """
-    根据不同操作系统获取 Cursor 相关路径
-
-    Returns:
-        Tuple[str, str]: (package.json路径, main.js路径)的元组
-
-    Raises:
-        OSError: 当找不到有效路径或系统不支持时抛出
-    """
     system = platform.system()
 
-    paths_map = {
-        "Darwin": {
-            "base": "/Applications/Cursor.app/Contents/Resources/app",
-            "package": "package.json",
-            "main": "out/main.js",
-        },
-        "Windows": {
-            "base": os.path.join(
-                os.getenv("USERAPPPATH") or os.path.join(os.getenv("LOCALAPPDATA", ""), "Programs", "Cursor", "resources", "app")
-            ),
-            "package": "package.json",
-            "main": "out/main.js",
-        },
-        "Linux": {
-            "bases": ["/opt/Cursor/resources/app", "/usr/share/cursor/resources/app", "/home/socrates/Applications/Cursor/resources/app"],
-            "package": "package.json",
-            "main": "out/main.js",
-        },
-    }
-
-    if system not in paths_map:
-        raise OSError(f"帅哥,不支持的操作系统: {system}")
-
     if system == "Linux":
-        for base in paths_map["Linux"]["bases"]:
-            pkg_path = os.path.join(base, paths_map["Linux"]["package"])
-            if os.path.exists(pkg_path):
-                return (pkg_path, os.path.join(base, paths_map["Linux"]["main"]))
-        raise OSError("帅哥,在 Linux 系统上未找到 Cursor 安装路径")
+        # 首先检查 AppImage 版本
+        appimage_path = "/home/socrates/Applications/cursor.AppImage"
+        if os.path.exists(appimage_path):
+            # 确保 AppImage 已经运行
+            if not os.path.exists("/tmp/.mount_cursor"):
+                logger.info("帅哥，请先运行 Cursor AppImage")
+                os.system(f"{appimage_path} &")
+                import time
+                time.sleep(5)  # 等待 AppImage 挂载
+            
+            # AppImage挂载点通常在/tmp/.mount_cursor-随机字符
+            mount_points = [d for d in os.listdir("/tmp") if d.startswith(".mount_cursor")]
+            if mount_points:
+                base_path = os.path.join("/tmp", mount_points[0], "resources/app")
+                pkg_path = os.path.join(base_path, "package.json")
+                main_path = os.path.join(base_path, "out/main.js")
+                if os.path.exists(pkg_path) and os.path.exists(main_path):
+                    logger.info(f"帅哥，找到 Cursor AppImage 版本")
+                    return (pkg_path, main_path)
+                else:
+                    logger.error(f"帅哥，AppImage 资源文件不完整")
+            else:
+                logger.error(f"帅哥，未找到 AppImage 挂载点")
+        
+        # 如果 AppImage 检查失败，继续检查其他安装路径
+        paths_map = {
+            "Darwin": {
+                "base": "/Applications/Cursor.app/Contents/Resources/app",
+                "package": "package.json",
+                "main": "out/main.js",
+            },
+            "Windows": {
+                "base": os.path.join(
+                    os.getenv("USERAPPPATH") or os.path.join(os.getenv("LOCALAPPDATA", ""), "Programs", "Cursor", "resources", "app")
+                ),
+                "package": "package.json",
+                "main": "out/main.js",
+            },
+            "Linux": {
+                "bases": ["/opt/Cursor/resources/app", "/usr/share/cursor/resources/app", "/home/socrates/Applications/Cursor/resources/app"],
+                "package": "package.json",
+                "main": "out/main.js",
+            },
+        }
 
-    base_path = paths_map[system]["base"]
-    # 判断Windows是否存在这个文件夹,如果不存在,提示需要创建软连接后重试
-    if system  == "Windows":
-        if not os.path.exists(base_path):
-            logging.info('帅哥,可能您的Cursor不是默认安装路径,请创建软连接,命令如下:')
-            logging.info('帅哥,cmd /c mklink /d "C:\\Users\\<username>\\AppData\\Local\\Programs\\Cursor" "默认安装路径"')
-            logging.info('帅哥,例如:')
-            logging.info('帅哥,cmd /c mklink /d "C:\\Users\\<username>\\AppData\\Local\\Programs\\Cursor" "D:\\SoftWare\\cursor"')
-            input("\n帅哥,程序执行完毕，按回车键退出...")
-    return (
-        os.path.join(base_path, paths_map[system]["package"]),
-        os.path.join(base_path, paths_map[system]["main"]),
-    )
+        if system not in paths_map:
+            raise OSError(f"帅哥,不支持的操作系统: {system}")
+
+        if system == "Linux":
+            for base in paths_map["Linux"]["bases"]:
+                pkg_path = os.path.join(base, paths_map["Linux"]["package"])
+                if os.path.exists(pkg_path):
+                    return (pkg_path, os.path.join(base, paths_map["Linux"]["main"]))
+            raise OSError("帅哥,在 Linux 系统上未找到 Cursor 安装路径")
+
+        base_path = paths_map[system]["base"]
+        # 判断Windows是否存在这个文件夹,如果不存在,提示需要创建软连接后重试
+        if system  == "Windows":
+            if not os.path.exists(base_path):
+                logging.info('帅哥,可能您的Cursor不是默认安装路径,请创建软连接,命令如下:')
+                logging.info('帅哥,cmd /c mklink /d "C:\\Users\\<username>\\AppData\\Local\\Programs\\Cursor" "默认安装路径"')
+                logging.info('帅哥,例如:')
+                logging.info('帅哥,cmd /c mklink /d "C:\\Users\\<username>\\AppData\\Local\\Programs\\Cursor" "D:\\SoftWare\\cursor"')
+                input("\n帅哥,程序执行完毕，按回车键退出...")
+        return (
+            os.path.join(base_path, paths_map[system]["package"]),
+            os.path.join(base_path, paths_map[system]["main"]),
+        )
 
 
 def check_system_requirements(pkg_path: str, main_path: str) -> bool:

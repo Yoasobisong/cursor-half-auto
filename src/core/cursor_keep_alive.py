@@ -388,10 +388,33 @@ class EmailGenerator:
         return random.choice(self.names)
 
     def generate_email(self, length=4):
-        """生成随机邮箱地址"""
+        """生成随机邮箱地址
+        Args:
+            length: 时间戳长度，默认为4
+        Returns:
+            str: 生成的邮箱地址
+        """
         length = random.randint(0, length)  # 生成0到length之间的随机整数
         timestamp = str(int(time.time()))[-length:]  # 使用时间戳后length位
-        return f"{self.default_first_name}{timestamp}@{self.domain}"  #
+        
+        # 显示可用的域名列表
+        print("\n可用的域名列表:")
+        for i, domain in enumerate(self.domain, 1):
+            print(f"{i}. {domain}")
+            
+        # 让用户选择域名
+        while True:
+            try:
+                choice = int(input("\n请选择域名 (输入数字): ").strip())
+                if 1 <= choice <= len(self.domain):
+                    selected_domain = self.domain[choice - 1]
+                    break
+                else:
+                    print("无效的选择，请重新输入")
+            except ValueError:
+                print("请输入有效的数字")
+                
+        return f"{self.default_first_name}{timestamp}@{selected_domain}"
 
     def get_account_info(self):
         """获取完整的账号信息"""

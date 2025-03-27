@@ -14,25 +14,14 @@ LOG_LEVELS = {
 }
 
 # 配置日志格式
-FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+FORMAT = "%(message)s"
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
-# 设置日志目录
-LOG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "logs")
-ACCOUNT_LOG_DIR = LOG_DIR  # 账号日志与普通日志使用相同目录
-
-# 确保日志目录存在
-if not os.path.exists(LOG_DIR):
-    os.makedirs(LOG_DIR)
-
-# 配置日志处理器
-log_path = os.path.join(LOG_DIR, f"{datetime.now().strftime('%Y-%m-%d')}.log")
-file_handler = logging.FileHandler(log_path, encoding="utf-8")
+# 配置控制台处理器
 console_handler = logging.StreamHandler(sys.stdout)
 
 # 设置格式
 formatter = logging.Formatter(FORMAT, TIME_FORMAT)
-file_handler.setFormatter(formatter)
 console_handler.setFormatter(formatter)
 
 # 配置根日志记录器
@@ -40,7 +29,7 @@ logging.basicConfig(
     level=logging.INFO,
     format=FORMAT,
     datefmt=TIME_FORMAT,
-    handlers=[file_handler, console_handler]
+    handlers=[console_handler]
 )
 
 # 初始化主日志记录器
@@ -57,16 +46,8 @@ class AccountLogger:
         # 清除现有的处理器
         self.logger.handlers = []
         
-        # 创建账号日志文件
-        account_log_file = os.path.join(ACCOUNT_LOG_DIR, f"accounts_{datetime.now().strftime('%Y%m%d')}.log")
-        account_handler = logging.FileHandler(account_log_file, encoding="utf-8")
-        
-        # 设置简洁的格式
-        account_formatter = logging.Formatter("%(asctime)s - %(message)s")
-        account_handler.setFormatter(account_formatter)
-        
-        # 添加处理器
-        self.logger.addHandler(account_handler)
+        # 添加控制台处理器
+        self.logger.addHandler(console_handler)
     
     def log_account(self, email, password):
         """记录账号信息"""
@@ -90,7 +71,6 @@ def main_task():
         logging.info("帅哥,任务执行完成了.")
 
 if __name__ == "__main__":
-    logging.info(f"帅哥,日志系统已初始化,日志目录在: {os.path.abspath(LOG_DIR)}")
     logging.info("帅哥,应用程序已启动.")
     main_task()
     logging.info("帅哥,应用程序已退出.")
