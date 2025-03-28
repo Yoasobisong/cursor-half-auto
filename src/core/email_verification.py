@@ -23,6 +23,8 @@ class EmailVerificationHandler:
         self.session = requests.Session()
         # 获取协议类型，默认为 POP3
         self.protocol = self.config.get_protocol() or 'POP3'
+        # 打印所有初始化的信息
+        print(f"帅哥,初始化邮箱验证处理器，邮箱: {self.email}, 配置: {self.config}, IMAP: {self.imap}, 临时邮箱: {self.temp_mail}, 临时邮箱EPIN: {self.temp_mail_epin}, 协议: {self.protocol}")
 
     def get_verification_code(self, max_retries=10, retry_interval=30):
         """
@@ -76,28 +78,11 @@ class EmailVerificationHandler:
         try:
             # 连接到IMAP服务器
             mail = imaplib.IMAP4_SSL(self.imap['imap_server'], self.imap['imap_port'])
-            
-            # 根据当前使用的邮箱找到对应的账号和密码
-            imap_users = self.imap['imap_user'] if isinstance(self.imap['imap_user'], list) else [self.imap['imap_user']]
-            imap_passes = self.imap['imap_pass'] if isinstance(self.imap['imap_pass'], list) else [self.imap['imap_pass']]
-            
-            # 找到当前邮箱对应的索引
-            try:
-                user_index = imap_users.index(self.email)
-                current_user = imap_users[user_index]
-                current_pass = imap_passes[user_index]
-            except ValueError:
-                logging.error(f"帅哥，邮箱 {self.email} 未在配置中找到")
-                return None
-            except IndexError:
-                logging.error("帅哥，邮箱账号和密码数量不匹配")
-                return None
-                
-            mail.login(current_user, current_pass)
+            mail.login(self.imap['imap_user'], self.imap['imap_pass'])
             search_by_date=False
             # 针对网易系邮箱，imap登录后需要附带联系信息，且后续邮件搜索逻辑更改为获取当天的未读邮件
-            if current_user.endswith(('@163.com', '@126.com', '@yeah.net')):                
-                imap_id = ("name", current_user.split('@')[0], "contact", current_user, "version", "1.0.0", "vendor", "imaplib")
+            if self.imap['imap_user'].endswith(('@163.com', '@126.com', '@yeah.net')):                
+                imap_id = ("name", self.imap['imap_user'].split('@')[0], "contact", self.imap['imap_user'], "version", "1.0.0", "vendor", "imaplib")
                 mail.xatom('ID', '("' + '" "'.join(imap_id) + '")')
                 search_by_date=True
             mail.select(self.imap['imap_dir'])
@@ -290,6 +275,6 @@ class EmailVerificationHandler:
 
 
 if __name__ == "__main__":
-    email_handler = EmailVerificationHandler("example@example.com")
+    email_handler = EmailVerificationHandler("example@example.com", config=Config())
     code = email_handler.get_verification_code()
     print(code)

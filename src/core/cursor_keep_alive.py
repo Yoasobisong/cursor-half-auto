@@ -421,24 +421,17 @@ def check_cursor_version():
     """检查Cursor版本"""
     try:
         # 尝试获取Cursor路径
-        paths = patch_cursor_get_machine_id.get_cursor_paths()
-        if paths is None:
-            # 如果找不到路径，假设版本小于0.45
-            logging.warning("帅哥，找不到Cursor安装路径，假设版本小于0.45")
-            return False
-            
-        pkg_path, main_path = paths
+        pkg_path, main_path = patch_cursor_get_machine_id.get_cursor_paths()
         return patch_cursor_get_machine_id.check_cursor_version(pkg_path, main_path)
     except OSError:
         # 如果找不到Cursor安装路径，检查是否是AppImage版本
-        logging.info("帅哥，未找到标准安装路径的Cursor，尝试查找AppImage版本...")
+        logging.info("帅哥,未找到标准安装路径的Cursor，尝试查找AppImage版本...")
         appimage_path = os.path.expanduser("~/.config/Cursor/machineid")
         if os.path.exists(appimage_path):
-            logging.info("帅哥，检测到AppImage版本的Cursor")
+            logging.info("帅哥,检测到AppImage版本的Cursor")
             return False  # 假设AppImage版本小于0.45
         else:
-            logging.warning("帅哥，无法找到任何版本的Cursor，假设版本小于0.45")
-            return False
+            raise OSError("帅哥,无法找到任何版本的Cursor")
 
 
 def reset_machine_id(greater_than_0_45):
@@ -472,7 +465,7 @@ class CursorKeepAlive:
 
     def create_account(self):
         logging.info("\n帅哥,=== handsome boy please choose ===")
-        # ExitCursor()
+        ExitCursor()
 
         # 提示用户选择操作模式
         print("\n帅哥,handsome boy please 操作模式:")

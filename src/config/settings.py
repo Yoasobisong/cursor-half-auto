@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 import os
 import sys
 from src.utils.logger import logging
+import re
 
 # 尝试加载.env文件
 load_dotenv()
@@ -132,9 +133,23 @@ class Config:
                 if not imap_pass_str.startswith("["):
                     imap_pass_str = f"['{imap_pass_str}']"
                 
-                # 确保所有的值都用引号括起来
-                imap_user_str = imap_user_str.replace("[", "['").replace("]", "']").replace(",", "','").replace("''", "'")
-                imap_pass_str = imap_pass_str.replace("[", "['").replace("]", "']").replace(",", "','").replace("''", "'")
+                # 清理字符串
+                def clean_list_str(s):
+                    # 1. 移除注释（从#开始到行尾的内容）
+                    s = re.sub(r'#.*$', '', s)
+                    # 2. 移除所有空格和换行符
+                    s = s.replace(' ', '').replace('\n', '')
+                    # 3. 确保是列表格式
+                    if not s.startswith('['):
+                        s = f"['{s}']"
+                    # 4. 规范化列表格式
+                    s = s.replace('[', "['").replace(']', "']").replace(',', "','")
+                    # 5. 修复可能的多余引号
+                    s = s.replace("''", "'")
+                    return s
+                    
+                imap_user_str = clean_list_str(imap_user_str)
+                imap_pass_str = clean_list_str(imap_pass_str)
                 
                 self.imap_users = eval(imap_user_str)
                 self.imap_passes = eval(imap_pass_str)
@@ -157,6 +172,7 @@ class Config:
                         if 1 <= choice <= len(self.imap_users):
                             self.imap_user = self.imap_users[choice - 1]
                             self.imap_pass = self.imap_passes[choice - 1]
+                            print(f"帅哥,你选择了IMAP账号和密码: {self.imap_user}, {self.imap_pass}")
                             break
                         else:
                             print("无效的选择，请重新输入")
