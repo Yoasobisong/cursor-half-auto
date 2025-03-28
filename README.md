@@ -9,7 +9,11 @@
 - 交互式Turnstile验证过程，支持用户手动验证
 - 支持IMAP邮箱验证
 - 自动重置机器码
+  
+## windows直接使用
 
+ - release里已经发布了exe，只需要配置.env便可以直接使用
+   
 ## 安装
 
 ```bash
