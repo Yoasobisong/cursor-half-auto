@@ -14,7 +14,7 @@ LOG_LEVELS = {
 }
 
 # 配置日志格式
-FORMAT = "%(message)s"
+FORMAT = "%(asctime)s - %(message)s"
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 # 配置控制台处理器
@@ -48,14 +48,52 @@ class AccountLogger:
         
         # 添加控制台处理器
         self.logger.addHandler(console_handler)
+        
+        # 获取项目根目录
+        if getattr(sys, 'frozen', False):
+            # 如果是打包后的可执行文件
+            root_dir = os.path.dirname(sys.executable)
+        else:
+            # 如果是开发环境
+            root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        
+        # 创建日志目录（使用绝对路径）
+        log_dir = os.path.join(root_dir, 'src', 'logs')
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+            
+        # 创建文件处理器，使用当前日期作为文件名
+        current_date = datetime.now().strftime("%Y%m%d")
+        log_file = os.path.join(log_dir, f'accounts_{current_date}.log')
+        
+        try:
+            file_handler = logging.FileHandler(log_file, encoding='utf-8', mode='a')
+            file_handler.setFormatter(formatter)
+            self.logger.addHandler(file_handler)
+            self.logger.info(f"日志文件路径: {log_file}")
+        except Exception as e:
+            self.logger.error(f"创建日志文件失败: {str(e)}")
+            self.logger.error(f"尝试创建的路径: {log_file}")
     
     def log_account(self, email, password):
         """记录账号信息"""
-        self.logger.info(f"帅哥,这是你的账号信息 | Email: {email} | Password: {password}")
+        try:
+            message = f"帅哥,这是你的账号信息 | Email: {email} | Password: {password}"
+            self.logger.info(message)
+            return message
+        except Exception as e:
+            self.logger.error(f"记录账号信息失败: {str(e)}")
+            return None
     
     def log_error(self, error_message):
         """记录错误信息"""
-        self.logger.error(f"帅哥,出现错误了: {error_message}")
+        try:
+            message = f"帅哥,出现错误了: {error_message}"
+            self.logger.error(message)
+            return message
+        except Exception as e:
+            print(f"记录错误信息失败: {str(e)}")
+            return None
 
 # 为测试而添加的代码
 def main_task():
