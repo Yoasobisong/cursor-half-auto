@@ -47,13 +47,9 @@ jobs:
           --name "CursorAutoFree" ^
           "run.py"
 
-        copy requirements.txt dist\
-        copy README.md dist\
+        copy README_win.md dist\
         copy .env.example dist\.env.example
-        
-        echo @echo off > dist\启动程序.bat
-        echo CursorAutoFree.exe >> dist\启动程序.bat
-        
+                
         cd dist
         powershell "Compress-Archive -Path * -DestinationPath CursorAutoFree_Windows.zip"
 
