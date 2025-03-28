@@ -63,6 +63,7 @@ jobs:
         gh release create "$env:RELEASE_TAG" `
           dist/CursorAutoFree_Windows.zip `
           --title "Release $env:RELEASE_TAG" `
-          --notes "Windows自动构建版本 $($env:RELEASE_TAG)"
+          --notes "Windows Auto Build Version $($env:RELEASE_TAG)"
+          
       env:
         GH_TOKEN: ${{ github.token }}  # 使用GitHub自动生成的token
