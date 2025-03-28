@@ -23,7 +23,9 @@ jobs:
     - name: Set Release Tag
       shell: powershell
       run: |
-        $RELEASE_TAG = (Get-Date).ToString("yyyy-MM-dd")
+        $DATE = (Get-Date).ToString("yyyy-MM-dd")
+        $VERSION = "v1"  # 版本号，每次发布时递增
+        $RELEASE_TAG = "$DATE-$VERSION"
         "RELEASE_TAG=$RELEASE_TAG" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
 
     - name: Set up Python
